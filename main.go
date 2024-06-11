@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Tasks struct {
@@ -14,20 +17,21 @@ type Tasks struct {
 
 type Task struct {
 	Title      string `json:"title"`
-	Desc       string `json:"desc"`
 	Importance int    `json:"importance"`
 }
 
 func loadTasks(filename string) (Tasks, error) {
 	var tasks Tasks
-	jsonData, jsonErr := os.Open(filename)
-	if jsonErr != nil {
-		return tasks, jsonErr
+
+	jsonData, err := os.Open(filename)
+	if err != nil {
+		return tasks, err
 	}
 	defer jsonData.Close()
 
 	byteValue, _ := io.ReadAll(jsonData)
-	err := json.Unmarshal(byteValue, &tasks)
+
+	err = json.Unmarshal(byteValue, &tasks)
 	if err != nil {
 		return tasks, fmt.Errorf("error while decoding the data: %v", err)
 	}
@@ -53,12 +57,12 @@ func saveTasks(filename string, tasks Tasks) error {
 
 func printTasks(tasks Tasks) {
 	for _, task := range tasks.Tasks {
-		fmt.Printf("Task Title: %s, Description: %s, Importance: %d\n", task.Title, task.Desc, task.Importance)
+		fmt.Printf("Task Title: %s, Importance: %d\n", task.Title, task.Importance)
 	}
 }
 
-func addTask(tasks *Tasks, title, desc string, importance int) {
-	tasks.Tasks = append(tasks.Tasks, Task{Title: title, Desc: desc, Importance: importance})
+func addTask(tasks *Tasks, title string, importance int) {
+	tasks.Tasks = append(tasks.Tasks, Task{Title: title, Importance: importance})
 }
 
 func removeTask(tasks *Tasks, title string) {
@@ -70,21 +74,36 @@ func removeTask(tasks *Tasks, title string) {
 	}
 }
 
-func changeTask(tasks *Tasks, title, newDesc string, newImportance int) {
+func changeTask(tasks *Tasks, title string, newImportance int) {
 	for i, task := range tasks.Tasks {
 		if task.Title == title {
-			tasks.Tasks[i].Desc = newDesc
 			tasks.Tasks[i].Importance = newImportance
 			break
 		}
 	}
 }
 
+func getTitle(reader *bufio.Reader) string {
+	fmt.Print("Enter task title: ")
+	title, _ := reader.ReadString('\n')
+	return strings.TrimSpace(title)
+}
+
+func getImportance(reader *bufio.Reader) int {
+	for {
+		fmt.Print("Enter task importance: ")
+		importanceRead, _ := reader.ReadString('\n')
+		importanceStr := strings.TrimSpace(importanceRead)
+		importance, err := strconv.Atoi(importanceStr)
+		if err == nil {
+			return importance
+		}
+		fmt.Println("Invalid importance value. Please enter a valid integer.")
+	}
+}
+
 func main() {
 	action := flag.String("action", "", "Action to perform: add, remove, change")
-	title := flag.String("title", "", "Title of the task")
-	desc := flag.String("desc", "", "Description of the task")
-	importance := flag.Int("importance", 0, "Importance of the task")
 	flag.Parse()
 
 	filename := "/Users/dylandibeneditto/Desktop/new/go-todo/items.json"
@@ -95,39 +114,40 @@ func main() {
 		return
 	}
 
+	reader := bufio.NewReader(os.Stdin)
+
 	switch *action {
 	case "add":
-		if *title == "" || *desc == "" {
-			fmt.Println("Title and description must be provided to add a task.")
+		title := getTitle(reader)
+		importance := getImportance(reader)
+		if title == "" {
+			fmt.Println("Title must be provided to add a task.")
 			return
 		}
-		addTask(&tasks, *title, *desc, *importance)
-		err = saveTasks(filename, tasks)
-		if err != nil {
-			fmt.Println("Error saving tasks:", err)
-		}
+		addTask(&tasks, title, importance)
 	case "remove":
-		if *title == "" {
+		title := getTitle(reader)
+		if title == "" {
 			fmt.Println("Title must be provided to remove a task.")
 			return
 		}
-		removeTask(&tasks, *title)
-		err = saveTasks(filename, tasks)
-		if err != nil {
-			fmt.Println("Error saving tasks:", err)
-		}
+		removeTask(&tasks, title)
 	case "change":
-		if *title == "" || *desc == "" {
-			fmt.Println("Title and new description must be provided to change a task.")
+		title := getTitle(reader)
+		importance := getImportance(reader)
+		if title == "" {
+			fmt.Println("Title must be provided to change a task.")
 			return
 		}
-		changeTask(&tasks, *title, *desc, *importance)
-		err = saveTasks(filename, tasks)
-		if err != nil {
-			fmt.Println("Error saving tasks:", err)
-		}
+		changeTask(&tasks, title, importance)
 	default:
 		fmt.Println("Tasks:")
 		printTasks(tasks)
+		return
+	}
+
+	err = saveTasks(filename, tasks)
+	if err != nil {
+		fmt.Println("Error saving tasks:", err)
 	}
 }
