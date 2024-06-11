@@ -24,7 +24,7 @@ func main() {
 	//defining the array of tasks
 	var tasks Tasks
 
-	jsonData, jsonErr := os.Open("items.json")
+	jsonData, jsonErr := os.Open("/Users/dylandibeneditto/Desktop/new/go-todo/items.json")
 
 	if jsonErr != nil {
 		fmt.Println(jsonErr)
@@ -40,9 +40,9 @@ func main() {
 	}
 
 	//printing decoded array values one by one
-	for index, task := range tasks {
+	for i := 0; i < len(tasks.Tasks); i++ {
 
-		fmt.Println("Task Title: " + tasks.Tasks[index].Title)
+		fmt.Println("Task Title: " + tasks.Tasks[i].Desc)
 	}
 
 	defer jsonData.Close()
