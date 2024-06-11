@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -103,8 +102,6 @@ func getImportance(reader *bufio.Reader) int {
 }
 
 func main() {
-	action := flag.String("action", "", "Action to perform: add, remove, change")
-	flag.Parse()
 
 	filename := "/Users/dylandibeneditto/Desktop/new/go-todo/items.json"
 
@@ -116,8 +113,15 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	switch *action {
+	fmt.Println("Tasks:")
+	printTasks(tasks)
+
+	actionString, _ := reader.ReadString('\n')
+	action := strings.Trim(actionString, " \n")
+
+	switch action {
 	case "add":
+		fmt.Println("add")
 		title := getTitle(reader)
 		importance := getImportance(reader)
 		if title == "" {
@@ -141,9 +145,7 @@ func main() {
 		}
 		changeTask(&tasks, title, importance)
 	default:
-		fmt.Println("Tasks:")
-		printTasks(tasks)
-		return
+		fmt.Println("exiting after command '" + action + "' is not found")
 	}
 
 	err = saveTasks(filename, tasks)
