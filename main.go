@@ -58,7 +58,7 @@ func saveTasks(filename string, tasks Tasks) error {
 }
 
 func printTasks(tasks Tasks) {
-	fmt.Println("Your tasks:")
+	color.Cyan("Your tasks:")
 	fmt.Println("---")
 	for _, task := range tasks.Tasks {
 		color.Set(color.FgHiYellow)

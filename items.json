@@ -1,16 +1,10 @@
 {
   "tasks": [
     {
-      "title": "hello",
+      "title": "go todo app",
       "commits": [
-        "hello v3",
-        "hello v2",
-        "hello"
+        "finish commit system"
       ]
-    },
-    {
-      "title": "new project",
-      "commits": []
     }
   ]
 }
