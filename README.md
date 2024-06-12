@@ -3,11 +3,10 @@ This app is a simple app which was created as a project to learn go. The project
 
 ## Installation
 In order to run this app you can clone the repository and either use the precompiled file and run it in the terminal or compile/interpret the code using the go interpretter. 
-*interpretter*
 ```sh
 go run main.go
 ```
-*compiler*
+*or*
 ```sh
 go build -o tasks main.go
 ```
