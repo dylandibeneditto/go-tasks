@@ -1,20 +1,12 @@
 {
   "tasks": [
     {
-      "title": "hello",
-      "importance": 1
-    },
-    {
       "title": "New task",
-      "importance": 1
+      "commits": []
     },
     {
-      "title": "hello",
-      "importance": 2
-    },
-    {
-      "title": "hello",
-      "importance": 2
+      "title": "Hello",
+      "commits": []
     }
   ]
 }

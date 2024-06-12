@@ -8,6 +8,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/fatih/color"
 )
 
 type Tasks struct {
@@ -15,8 +17,8 @@ type Tasks struct {
 }
 
 type Task struct {
-	Title      string `json:"title"`
-	Importance int    `json:"importance"`
+	Title   string   `json:"title"`
+	Commits []string `json:"commits"`
 }
 
 func loadTasks(filename string) (Tasks, error) {
@@ -32,7 +34,8 @@ func loadTasks(filename string) (Tasks, error) {
 
 	err = json.Unmarshal(byteValue, &tasks)
 	if err != nil {
-		return tasks, fmt.Errorf("error while decoding the data: %v", err)
+		color.Set(color.FgHiRed)
+		return tasks, fmt.Errorf("Error while decoding the data: %v.", err)
 	}
 
 	return tasks, nil
@@ -56,30 +59,42 @@ func saveTasks(filename string, tasks Tasks) error {
 
 func printTasks(tasks Tasks) {
 	for _, task := range tasks.Tasks {
-		fmt.Printf("Task Title: %s, Importance: %d\n", task.Title, task.Importance)
+		color.Set(color.FgHiYellow)
+		fmt.Print(strconv.Itoa(len(task.Commits)) + " commits")
+		color.Unset()
+		fmt.Print(" - ")
+		color.Set(color.FgCyan)
+		color.Cyan("%s", task.Title)
+		color.Unset()
 	}
 }
 
-func addTask(tasks *Tasks, title string, importance int) {
-	tasks.Tasks = append(tasks.Tasks, Task{Title: title, Importance: importance})
+func addTask(tasks *Tasks, title string) {
+	tasks.Tasks = append(tasks.Tasks, Task{Title: title, Commits: []string{}})
+	color.Green("Task '%s' added.", title)
 }
 
 func removeTask(tasks *Tasks, title string) {
 	for i, task := range tasks.Tasks {
 		if task.Title == title {
 			tasks.Tasks = append(tasks.Tasks[:i], tasks.Tasks[i+1:]...)
-			break
+			color.Red("Task '%s' removed.", title)
+			return
 		}
 	}
+	color.Red("Task '%s' not found.", title)
 }
 
-func changeTask(tasks *Tasks, title string, newImportance int) {
+func renameTask(tasks *Tasks, reader *bufio.Reader, title string) {
 	for i, task := range tasks.Tasks {
 		if task.Title == title {
-			tasks.Tasks[i].Importance = newImportance
-			break
+			newTitle, _ := reader.ReadString('\n')
+			tasks.Tasks[i].Title = newTitle
+			color.Yellow("Task '%s' changed to '%d'.", title, newTitle)
+			return
 		}
 	}
+	color.Red("Task '%s' not found.", title)
 }
 
 func getTitle(reader *bufio.Reader) string {
@@ -88,68 +103,52 @@ func getTitle(reader *bufio.Reader) string {
 	return strings.TrimSpace(title)
 }
 
-func getImportance(reader *bufio.Reader) int {
-	for {
-		fmt.Print("Enter task importance: ")
-		importanceRead, _ := reader.ReadString('\n')
-		importanceStr := strings.TrimSpace(importanceRead)
-		importance, err := strconv.Atoi(importanceStr)
-		if err == nil {
-			return importance
-		}
-		fmt.Println("Invalid importance value. Please enter a valid integer.")
-	}
-}
-
 func main() {
-
 	filename := "/Users/dylandibeneditto/Desktop/new/go-todo/items.json"
 
 	tasks, err := loadTasks(filename)
 	if err != nil {
-		fmt.Println("Error loading tasks:", err)
+		color.Red("Error loading tasks: %v", err)
 		return
 	}
 
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Println("Tasks:")
 	printTasks(tasks)
 
+	fmt.Print("(add, remove, change): ")
 	actionString, _ := reader.ReadString('\n')
-	action := strings.Trim(actionString, " \n")
+	action := strings.TrimSpace(actionString)
 
 	switch action {
 	case "add":
-		fmt.Println("add")
 		title := getTitle(reader)
-		importance := getImportance(reader)
 		if title == "" {
-			fmt.Println("Title must be provided to add a task.")
+			color.Red("Title must be provided to add a task.")
 			return
 		}
-		addTask(&tasks, title, importance)
+		addTask(&tasks, title)
 	case "remove":
 		title := getTitle(reader)
 		if title == "" {
-			fmt.Println("Title must be provided to remove a task.")
+			color.Red("Title must be provided to remove a task.")
 			return
 		}
 		removeTask(&tasks, title)
 	case "change":
 		title := getTitle(reader)
-		importance := getImportance(reader)
 		if title == "" {
-			fmt.Println("Title must be provided to change a task.")
+			color.Red("Title must be provided to change a task.")
 			return
 		}
-		changeTask(&tasks, title, importance)
+		renameTask(&tasks, reader, title)
 	default:
-		fmt.Println("exiting after command '" + action + "' is not found")
+		color.Red("Invalid action: %s", action)
+		return
 	}
 
 	err = saveTasks(filename, tasks)
 	if err != nil {
-		fmt.Println("Error saving tasks:", err)
+		color.Red("Error saving tasks: %v", err)
 	}
 }
