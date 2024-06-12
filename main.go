@@ -58,14 +58,22 @@ func saveTasks(filename string, tasks Tasks) error {
 }
 
 func printTasks(tasks Tasks) {
+	fmt.Println("Your tasks:")
+	fmt.Println("---")
 	for _, task := range tasks.Tasks {
 		color.Set(color.FgHiYellow)
-		fmt.Print(strconv.Itoa(len(task.Commits)) + " commits")
+		fmt.Print(" " + strconv.Itoa(len(task.Commits)))
 		color.Unset()
 		fmt.Print(" - ")
-		color.Set(color.FgCyan)
-		color.Cyan("%s", task.Title)
+		color.Set(color.FgHiMagenta)
+		fmt.Println(task.Title)
+		if len(task.Commits) == 0 {
+			color.HiBlack("%s", " > N/A")
+		} else {
+			color.HiBlack(" > last: %s", task.Commits[0])
+		}
 		color.Unset()
+		fmt.Println("---")
 	}
 }
 
@@ -88,7 +96,11 @@ func removeTask(tasks *Tasks, title string) {
 func renameTask(tasks *Tasks, reader *bufio.Reader, title string) {
 	for i, task := range tasks.Tasks {
 		if task.Title == title {
-			newTitle, _ := reader.ReadString('\n')
+			color.Set(color.FgHiBlack)
+			fmt.Print("New task title: ")
+			color.Unset()
+			newTitleRaw, _ := reader.ReadString('\n')
+			newTitle := strings.TrimSpace(newTitleRaw)
 			tasks.Tasks[i].Title = newTitle
 			color.Yellow("Task '%s' changed to '%d'.", title, newTitle)
 			return
@@ -97,8 +109,25 @@ func renameTask(tasks *Tasks, reader *bufio.Reader, title string) {
 	color.Red("Task '%s' not found.", title)
 }
 
+func commitTask(tasks *Tasks, reader *bufio.Reader, title string) {
+	for i, task := range tasks.Tasks {
+		if task.Title == title {
+			color.Set(color.FgHiBlack)
+			fmt.Printf("(%s) - commit: ", title)
+			color.Unset()
+			newCommitRaw, _ := reader.ReadString('\n')
+			newCommit := strings.TrimSpace(newCommitRaw)
+			tasks.Tasks[i].Commits = append([]string{newCommit}, tasks.Tasks[i].Commits...)
+			color.Green("Commit '%s' added to task '%d'", newCommit, title)
+		}
+	}
+	color.Red("Task '%s' not found.", title)
+}
+
 func getTitle(reader *bufio.Reader) string {
+	color.Set(color.FgHiBlack)
 	fmt.Print("Enter task title: ")
+	color.Unset()
 	title, _ := reader.ReadString('\n')
 	return strings.TrimSpace(title)
 }
@@ -115,8 +144,9 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 
 	printTasks(tasks)
-
-	fmt.Print("(add, remove, change): ")
+	color.Set(color.FgHiBlack)
+	fmt.Print("\n(add, remove, rename, commit): ")
+	color.Unset()
 	actionString, _ := reader.ReadString('\n')
 	action := strings.TrimSpace(actionString)
 
@@ -135,13 +165,19 @@ func main() {
 			return
 		}
 		removeTask(&tasks, title)
-	case "change":
+	case "rename":
 		title := getTitle(reader)
 		if title == "" {
 			color.Red("Title must be provided to change a task.")
 			return
 		}
 		renameTask(&tasks, reader, title)
+	case "commit":
+		title := getTitle(reader)
+		if title == "" {
+			color.Red("Title must be provided to commit to a task.")
+		}
+		commitTask(&tasks, reader, title)
 	default:
 		color.Red("Invalid action: %s", action)
 		return

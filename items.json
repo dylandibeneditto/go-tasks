@@ -1,11 +1,15 @@
 {
   "tasks": [
     {
-      "title": "New task",
-      "commits": []
+      "title": "hello",
+      "commits": [
+        "hello v3",
+        "hello v2",
+        "hello"
+      ]
     },
     {
-      "title": "Hello",
+      "title": "new project",
       "commits": []
     }
   ]
