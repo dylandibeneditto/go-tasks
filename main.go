@@ -35,7 +35,7 @@ func loadTasks(filename string) (Tasks, error) {
 	err = json.Unmarshal(byteValue, &tasks)
 	if err != nil {
 		color.Set(color.FgHiRed)
-		return tasks, fmt.Errorf("Error while decoding the data: %v.", err)
+		return tasks, fmt.Errorf("error while decoding the data: %v", err)
 	}
 
 	return tasks, nil
